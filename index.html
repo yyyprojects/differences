@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Guide: ETF vs. Mutual Fund</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Slate & Amber -->
+    <!-- Application Structure Plan: The SPA is designed as an educational journey. It starts with a high-level introduction, then moves to a direct, interactive side-by-side comparison of key features. This is followed by a quantitative deep-dive using interactive charts for costs and tax efficiency, making the data tangible. The structure culminates in a "Which is for you?" persona-based guide, which translates the report's information into actionable advice. This user-centric flow was chosen to build understanding progressively, from broad concepts to specific data points and finally to personal application, which is more effective for a novice audience than the report's linear structure. -->
+    <!-- Visualization & Content Choices: 1. Key Differences Table: Report Info -> Core comparative features (Trading, Cost, Tax, etc.). Goal -> Compare. Viz -> Interactive Tabbed Table. Interaction -> User clicks tabs to reveal detailed text comparisons. Justification -> Allows users to control the information flow and focus on one difference at a time. Method -> HTML/Tailwind/JS. 2. Expense Ratio Chart: Report Info -> Average expense ratio data. Goal -> Compare. Viz -> Bar Chart. Interaction -> Hover tooltips show precise percentages. Justification -> Visually dramatizes the cost difference, which is a key decision factor. Library -> Chart.js/Canvas. 3. Tax Efficiency Chart: Report Info -> Capital gains distribution percentages. Goal -> Compare. Viz -> Bar Chart. Interaction -> Hover tooltips show percentages. Justification -> Clearly illustrates the significant tax advantage of ETFs. Library -> Chart.js/Canvas. 4. Persona Selector: Report Info -> Strategic advice for different investor types. Goal -> Guide. Viz -> Interactive Cards. Interaction -> User clicks a persona to see tailored recommendations. Justification -> Makes the information personally relevant and helps users synthesize the report's conclusions. Method -> HTML/Tailwind/JS. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc; /* slate-50 */
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px;
+            max-height: 450px;
+        }
+        @media (max-width: 768px) {
+            .chart-container {
+                height: 300px;
+            }
+        }
+        .nav-link {
+            transition: color 0.3s, border-bottom-color 0.3s;
+        }
+        .nav-link.active {
+            color: #ca8a04; /* amber-600 */
+            border-bottom-color: #ca8a04; /* amber-600 */
+        }
+        .persona-card {
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .persona-card:hover {
+            transform: translateY(-5px);
+        }
+        .persona-card.selected {
+            border-color: #ca8a04; /* amber-600 */
+            box-shadow: 0 4px 14px 0 rgba(202, 138, 4, 0.3);
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="text-slate-800">
+
+    <header class="bg-white/80 backdrop-blur-md sticky top-0 z-50 shadow-sm">
+        <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <h1 class="text-xl md:text-2xl font-bold text-slate-900">ETF vs. Mutual Fund</h1>
+            <div class="hidden md:flex space-x-8">
+                <a href="#introduction" class="nav-link text-slate-600 hover:text-amber-600 border-b-2 border-transparent">Introduction</a>
+                <a href="#comparison" class="nav-link text-slate-600 hover:text-amber-600 border-b-2 border-transparent">Comparison</a>
+                <a href="#deep-dive" class="nav-link text-slate-600 hover:text-amber-600 border-b-2 border-transparent">Deep Dive</a>
+                <a href="#scenarios" class="nav-link text-slate-600 hover:text-amber-600 border-b-2 border-transparent">Which is for You?</a>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto px-6 py-8 md:py-16">
+
+        <section id="introduction" class="text-center mb-16 md:mb-24">
+            <h2 class="text-3xl md:text-4xl font-bold mb-4 text-slate-900">Choosing Your Investment Path</h2>
+            <p class="max-w-3xl mx-auto text-lg text-slate-600">
+                Welcome to your interactive guide to understanding two of the most popular investment tools in the U.S.: Exchange-Traded Funds (ETFs) and Mutual Funds. Both let you buy a collection of investments in one go, but they work differently. This guide will break down those differences to help you decide which path might be right for your financial journey.
+            </p>
+        </section>
+
+        <section id="comparison" class="mb-16 md:mb-24">
+            <h2 class="text-3xl font-bold text-center mb-2 text-slate-900">At a Glance: The Key Differences</h2>
+            <p class="text-center text-slate-600 mb-10 max-w-2xl mx-auto">Click on each feature to see how ETFs and Mutual Funds stack up. This section provides a direct, side-by-side view of their most important characteristics, helping you quickly grasp the core distinctions.</p>
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                <div class="grid grid-cols-1 md:grid-cols-3">
+                    <div id="comparison-nav" class="bg-slate-100 p-4 border-r border-slate-200">
+                        <ul class="space-y-2">
+                            <li><button data-target="trading" class="w-full text-left p-3 font-semibold rounded-md bg-white text-amber-600 shadow">📈 Trading & Pricing</button></li>
+                            <li><button data-target="costs" class="w-full text-left p-3 font-semibold rounded-md hover:bg-slate-200">💰 Costs & Fees</button></li>
+                            <li><button data-target="taxes" class="w-full text-left p-3 font-semibold rounded-md hover:bg-slate-200">🧾 Tax Efficiency</button></li>
+                            <li><button data-target="access" class="w-full text-left p-3 font-semibold rounded-md hover:bg-slate-200">🚪 Accessibility</button></li>
+                            <li><button data-target="transparency" class="w-full text-left p-3 font-semibold rounded-md hover:bg-slate-200">🔍 Transparency</button></li>
+                        </ul>
+                    </div>
+                    <div id="comparison-content" class="md:col-span-2 p-6 md:p-8">
+                        
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="deep-dive" class="mb-16 md:mb-24">
+            <h2 class="text-3xl font-bold text-center mb-2 text-slate-900">A Deeper Dive: By the Numbers</h2>
+             <p class="text-center text-slate-600 mb-10 max-w-2xl mx-auto">Visualizations bring the data to life. This section uses interactive charts based on the report's findings to clearly illustrate the significant differences in costs and tax implications between ETFs and Mutual Funds.</p>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                <div class="bg-white p-6 rounded-xl shadow-lg">
+                    <h3 class="text-xl font-bold mb-1 text-slate-900">Cost Comparison: Expense Ratios</h3>
+                    <p class="text-slate-600 mb-4 text-sm">This chart shows the median annual fees (expense ratios) for funds. Lower fees mean more of your money stays invested. ETFs, especially passive ones, typically have a significant cost advantage.</p>
+                    <div class="chart-container">
+                        <canvas id="costChart"></canvas>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-lg">
+                    <h3 class="text-xl font-bold mb-1 text-slate-900">Tax Efficiency: Capital Gains</h3>
+                    <p class="text-slate-600 mb-4 text-sm">This chart shows the percentage of funds that passed on taxable capital gains to investors in 2023. ETFs' unique structure helps avoid this, making them more tax-friendly in regular brokerage accounts.</p>
+                    <div class="chart-container">
+                        <canvas id="taxChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="scenarios" class="text-center">
+            <h2 class="text-3xl font-bold mb-2 text-slate-900">Which is Right for You?</h2>
+            <p class="max-w-3xl mx-auto text-lg text-slate-600 mb-10">Your investment style is unique. Select the profile that best describes you to see a recommendation based on the report's strategic advice. This section helps you apply the information from this guide to your personal situation.</p>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="persona-card cursor-pointer bg-white p-6 rounded-xl shadow-md border-2 border-transparent" data-persona="passive">
+                    <div class="text-4xl mb-4">🌱</div>
+                    <h3 class="text-xl font-bold mb-2">The Hands-Off Saver</h3>
+                    <p class="text-slate-600 text-sm">You want to invest regularly and let it grow over the long term with minimal fuss.</p>
+                </div>
+                <div class="persona-card cursor-pointer bg-white p-6 rounded-xl shadow-md border-2 border-transparent" data-persona="active">
+                    <div class="text-4xl mb-4">⚡️</div>
+                    <h3 class="text-xl font-bold mb-2">The Active Trader</h3>
+                    <p class="text-slate-600 text-sm">You like to react to market news, manage your portfolio closely, and make frequent trades.</p>
+                </div>
+                 <div class="persona-card cursor-pointer bg-white p-6 rounded-xl shadow-md border-2 border-transparent" data-persona="tax-conscious">
+                    <div class="text-4xl mb-4">💡</div>
+                    <h3 class="text-xl font-bold mb-2">The Tax-Conscious Investor</h3>
+                    <p class="text-slate-600 text-sm">Your priority is maximizing after-tax returns in a standard (non-retirement) brokerage account.</p>
+                </div>
+            </div>
+
+            <div id="persona-result" class="bg-white p-8 rounded-xl shadow-lg max-w-4xl mx-auto hidden">
+            </div>
+        </section>
+    </main>
+    
+    <footer class="bg-slate-800 text-slate-400 mt-16">
+        <div class="container mx-auto px-6 py-8 text-center">
+            <p>This interactive guide is based on the report "A Comprehensive Analysis of Exchange-Traded Funds (ETFs) Versus Mutual Funds in the United States."</p>
+            <p class="text-sm mt-2">All information is for educational purposes only and should not be considered financial advice.</p>
+        </div>
+    </footer>
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const comparisonData = {
+                trading: {
+                    title: '📈 Trading & Pricing',
+                    etf: '<strong>Like a Stock:</strong> ETFs trade on stock exchanges throughout the day. Their price can change constantly based on supply and demand. This allows for flexible trading, including placing specific order types (like limit orders).',
+                    mf: '<strong>Once a Day:</strong> Mutual Funds are bought and sold directly from the fund company at a price calculated once per day, after the market closes. Everyone who buys or sells on a given day gets the same price.'
+                },
+                costs: {
+                    title: '💰 Costs & Fees',
+                    etf: '<strong>Generally Lower Fees:</strong> ETFs, especially those that track an index, often have lower annual fees (expense ratios). You might pay a commission to your broker to trade them, but many are now commission-free. Watch out for the "bid-ask spread," a small hidden cost in trading.',
+                    mf: '<strong>Can Be Higher:</strong> Mutual Funds, especially actively managed ones, tend to have higher expense ratios. Some also have "sales loads" (commissions) you pay when buying or selling. They do not have bid-ask spreads.'
+                },
+                taxes: {
+                    title: '🧾 Tax Efficiency',
+                    etf: '<strong>More Tax-Friendly:</strong> ETFs are structured to minimize taxable events for the investor. You typically only pay capital gains tax when you decide to sell your own shares. This gives you more control over your tax bill.',
+                    mf: '<strong>Can Trigger Taxes:</strong> When a mutual fund manager sells assets within the fund, it can create capital gains that are passed on to all shareholders—even if you haven\'t sold your shares. This can result in unexpected tax bills.'
+                },
+                access: {
+                    title: '🚪 Accessibility',
+                    etf: '<strong>Low Barrier to Entry:</strong> You can typically start investing with the price of just one share. With fractional shares available at many brokerages, you can even start with a few dollars. Requires a brokerage account.',
+                    mf: '<strong>Minimum Investments:</strong> Traditionally require a minimum initial investment, often $500 to $5,000 or more. However, some fund companies now offer funds with no minimum. They are great for setting up automatic, recurring investments.'
+                },
+                transparency: {
+                    title: '🔍 Transparency',
+                    etf: '<strong>Full Daily Disclosure:</strong> Most ETFs are required to show exactly what investments they hold every single day. You always know what you own.',
+                    mf: '<strong>Less Frequent Updates:</strong> Mutual Funds typically disclose their holdings only once per quarter or month. You have a less current view of what\'s inside the fund.'
+                }
+            };
+
+            const personaData = {
+                passive: {
+                    title: 'For the Hands-Off Saver, a Mutual Fund might be a great fit.',
+                    recommendation: 'Mutual funds excel at facilitating disciplined, long-term saving. Their key advantage for you is the ability to easily set up <strong>automatic, recurring investments</strong>. This "set it and forget it" approach supports dollar-cost averaging and removes the temptation to time the market. While some ETFs can now be auto-invested through certain brokers, it\'s a core, seamless feature of mutual funds.',
+                    consideration: 'Consider a low-cost <strong>index mutual fund</strong> to keep fees down. Since you\'re investing for the long term, the lack of intraday trading is not a drawback.'
+                },
+                active: {
+                    title: 'For the Active Trader, an ETF is the clear choice.',
+                    recommendation: 'ETFs are built for flexibility. Their ability to be <strong>traded throughout the day at live market prices</strong> gives you the control you need to react to market changes instantly. You can use advanced order types like limit orders and even short-sell if your strategy calls for it—options not available with mutual funds.',
+                    consideration: 'Be mindful of trading costs. While many ETFs are commission-free, frequent trading can rack up costs from <strong>bid-ask spreads</strong>. This is the small difference between the buying and selling price.'
+                },
+                'tax-conscious': {
+                    title: 'For the Tax-Conscious Investor, an ETF is generally superior.',
+                    recommendation: 'In a standard brokerage account, tax efficiency is paramount. ETFs have a significant structural advantage here. Their "in-kind" creation and redemption process means they rarely distribute <strong>taxable capital gains</strong>. This gives you control, as you only face taxes when you personally decide to sell your shares.',
+                    consideration: 'This advantage is most pronounced in taxable accounts. If you are investing within a tax-advantaged account like a <strong>401(k) or IRA</strong>, this specific benefit of ETFs is less important, as gains are already tax-deferred or tax-free.'
+                }
+            };
+            
+            const contentDiv = document.getElementById('comparison-content');
+            const navButtons = document.querySelectorAll('#comparison-nav button');
+
+            function updateContent(target) {
+                const data = comparisonData[target];
+                contentDiv.innerHTML = `
+                    <div class="fade-in">
+                        <h3 class="text-2xl font-bold mb-4 text-slate-900">${data.title}</h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                            <div>
+                                <h4 class="font-bold text-lg mb-2 text-slate-800">Exchange-Traded Funds (ETFs)</h4>
+                                <p class="text-slate-600">${data.etf}</p>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-lg mb-2 text-slate-800">Mutual Funds</h4>
+                                <p class="text-slate-600">${data.mf}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            navButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    navButtons.forEach(btn => btn.classList.remove('bg-white', 'text-amber-600', 'shadow'));
+                    button.classList.add('bg-white', 'text-amber-600', 'shadow');
+                    const target = button.getAttribute('data-target');
+                    updateContent(target);
+                });
+            });
+
+            updateContent('trading');
+
+            const personaCards = document.querySelectorAll('.persona-card');
+            const personaResultDiv = document.getElementById('persona-result');
+
+            personaCards.forEach(card => {
+                card.addEventListener('click', () => {
+                    personaCards.forEach(c => c.classList.remove('selected'));
+                    card.classList.add('selected');
+
+                    const persona = card.getAttribute('data-persona');
+                    const data = personaData[persona];
+
+                    personaResultDiv.innerHTML = `
+                        <div class="fade-in">
+                             <h3 class="text-xl md:text-2xl font-bold mb-3 text-slate-900">${data.title}</h3>
+                             <p class="text-slate-700 mb-4">${data.recommendation}</p>
+                             <div class="bg-amber-50 border-l-4 border-amber-500 text-amber-800 p-4 rounded-r-lg">
+                                 <p><strong>Also Consider:</strong> ${data.consideration}</p>
+                             </div>
+                        </div>
+                    `;
+                    personaResultDiv.classList.remove('hidden');
+                });
+            });
+
+            const costCtx = document.getElementById('costChart').getContext('2d');
+            new Chart(costCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['ETFs', 'Mutual Funds'],
+                    datasets: [{
+                        label: 'Median Expense Ratio',
+                        data: [0.52, 0.91],
+                        backgroundColor: ['#334155', '#94a3b8'], // slate-700, slate-400
+                        borderColor: ['#0f172a', '#475569'], // slate-900, slate-600
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return value + '%'
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `Median Fee: ${context.raw}% per year`;
+                                }
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: 'Median Annual Fund Fees (2023)',
+                            font: { size: 14 }
+                        }
+                    }
+                }
+            });
+
+            const taxCtx = document.getElementById('taxChart').getContext('2d');
+            new Chart(taxCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['ETFs', 'Mutual Funds'],
+                    datasets: [{
+                        label: '% of Funds Distributing Capital Gains',
+                        data: [2.5, 31.5],
+                        backgroundColor: ['#334155', '#94a3b8'],
+                        borderColor: ['#0f172a', '#475569'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                             ticks: {
+                                callback: function(value) {
+                                    return value + '%'
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.raw}% of funds passed on taxable gains`;
+                                }
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: 'Likelihood of Receiving Taxable Distributions (2023)',
+                            font: { size: 14 }
+                        }
+                    }
+                }
+            });
+
+            const sections = document.querySelectorAll('main section');
+            const navLinks = document.querySelectorAll('header .nav-link');
+
+            window.addEventListener('scroll', () => {
+                let current = '';
+                sections.forEach(section => {
+                    const sectionTop = section.offsetTop;
+                    if (pageYOffset >= sectionTop - 100) {
+                        current = section.getAttribute('id');
+                    }
+                });
+
+                navLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('href') === `#${current}`) {
+                        link.classList.add('active');
+                    }
+                });
+            });
+        });
+    </script>
+
+</body>
+</html>
